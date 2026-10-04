@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Password Generator</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+
+  <body>
+    <main class="container">
+      <h1>Password Generator</h1>
+
+      <div class="password-row">
+        <input id="password" type="text" readonly />
+        <button id="copy" title="Copy password">Copy</button>
+      </div>
+
+      <div class="length-row">
+        <label for="length">
+          <span>Length</span>
+          <span id="lengthValue">20</span>
+        </label>
+
+        <input id="length" type="range" min="4" max="128" value="20" />
+      </div>
+
+      <section class="options">
+        <label>
+          <input type="checkbox" id="lowercase" checked />
+          a-z
+        </label>
+
+        <label>
+          <input type="checkbox" id="uppercase" checked />
+          A-Z
+        </label>
+
+        <label>
+          <input type="checkbox" id="numbers" checked />
+          0-9
+        </label>
+
+        <label>
+          <input type="checkbox" id="special" checked />
+          Special
+        </label>
+
+        <label class="full-width">
+          <input type="checkbox" id="problematic" />
+          Avoid problematic characters
+        </label>
+      </section>
+
+      <label class="field-label" for="blacklist"> Character blacklist </label>
+
+      <input
+        id="blacklist"
+        class="blacklist"
+        type="text"
+        value=""
+        spellcheck="false"
+        autocomplete="off"
+      />
+
+      <div id="status" class="status"></div>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
