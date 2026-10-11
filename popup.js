@@ -1,4 +1,5 @@
-const passwordInput = document.getElementById("password");const lengthInput = document.getElementById("length");
+const passwordInput = document.getElementById("password");
+const lengthInput = document.getElementById("length");
 const lengthValue = document.getElementById("lengthValue");
 
 const lowercaseInput = document.getElementById("lowercase");
@@ -6,10 +7,15 @@ const uppercaseInput = document.getElementById("uppercase");
 const numbersInput = document.getElementById("numbers");
 const specialInput = document.getElementById("special");
 const problematicInput = document.getElementById("problematic");
+const historyEnabledInput = document.getElementById("historyEnabled");
 
 const blacklistInput = document.getElementById("blacklist");
 const copyButton = document.getElementById("copy");
 const status = document.getElementById("status");
+const toggleHistoryButton = document.getElementById("toggleHistory");
+const clearHistoryButton = document.getElementById("clearHistory");
+const historyContainer = document.getElementById("history");
+const historySection = document.getElementById("historySection");
 
 const CHARSETS = {
   lowercase: "abcdefghijklmnopqrstuvwxyz",
@@ -52,8 +58,12 @@ const DEFAULT_SETTINGS = {
   numbers: true,
   special: true,
   problematic: false,
+  historyEnabled: true,
   blacklist: "*_`'\"\\|{}[]()<>"
 };
+const HISTORY_STORAGE_KEY = "passwordGeneratorHistory";
+const MAX_HISTORY_ENTRIES = 50;
+let lastCopiedPassword = null;
 
 function getRandomInt(max) {
   const array = new Uint32Array(1);
@@ -112,24 +122,31 @@ function getAvailableCharacters() {
     .join("");
 }
 
-function generatePassword() {
+function generatePassword(excludedPassword = "") {
   const length = Number(lengthInput.value);
   const characters = getAvailableCharacters();
 
   if (!characters.length) {
     passwordInput.value = "";
     status.textContent = "No characters available.";
-    return;
+    return false;
   }
 
-  let password = "";
+  let password;
+  do {
+    password = "";
 
-  for (let i = 0; i < length; i++) {
-    password += characters[getRandomInt(characters.length)];
-  }
+    for (let i = 0; i < length; i++) {
+      password += characters[getRandomInt(characters.length)];
+    }
+  } while (
+    password === excludedPassword &&
+    characters.length > 1
+  );
 
   passwordInput.value = password;
   status.textContent = "";
+  return true;
 }
 
 function getSettings() {
@@ -140,6 +157,7 @@ function getSettings() {
     numbers: numbersInput.checked,
     special: specialInput.checked,
     problematic: problematicInput.checked,
+    historyEnabled: historyEnabledInput.checked,
     blacklist: blacklistInput.value
   };
 }
@@ -148,6 +166,103 @@ async function saveSettings() {
   await chrome.storage.local.set({
     passwordGeneratorSettings: getSettings()
   });
+}
+
+async function getHistory() {
+  const result = await chrome.storage.local.get(HISTORY_STORAGE_KEY);
+  return Array.isArray(result[HISTORY_STORAGE_KEY])
+    ? result[HISTORY_STORAGE_KEY]
+    : [];
+}
+
+function renderHistory(history) {
+  historyContainer.replaceChildren();
+
+  if (!history.length) {
+    const emptyMessage = document.createElement("div");
+    emptyMessage.className = "history-empty";
+    emptyMessage.textContent = "No copied passwords yet.";
+    historyContainer.append(emptyMessage);
+    return;
+  }
+
+  history.forEach(entry => {
+    const historyEntry = document.createElement("div");
+    historyEntry.className = "history-entry";
+
+    const password = document.createElement("div");
+    password.className = "history-password";
+    password.textContent = entry.password;
+
+    const timestamp = document.createElement("div");
+    timestamp.className = "history-timestamp";
+    timestamp.textContent = new Date(entry.timestamp).toLocaleString();
+
+    const entryContent = document.createElement("div");
+    entryContent.className = "history-entry-content";
+    entryContent.append(password, timestamp);
+
+    const copyHistoryButton = document.createElement("button");
+    copyHistoryButton.className = "history-copy";
+    copyHistoryButton.type = "button";
+    copyHistoryButton.title = "Copy password";
+    copyHistoryButton.textContent = "Copy";
+    copyHistoryButton.addEventListener("click", async () => {
+      await copyPassword(entry.password);
+      status.textContent = "Copied!";
+      setTimeout(() => {
+        status.textContent = "";
+      }, 1500);
+    });
+
+    historyEntry.append(entryContent, copyHistoryButton);
+    historyContainer.append(historyEntry);
+  });
+}
+
+async function saveToHistory(password) {
+  const history = await getHistory();
+  const historyWithoutDuplicate = history.filter(
+    entry => entry.password !== password
+  );
+
+  historyWithoutDuplicate.unshift({
+    password,
+    timestamp: new Date().toISOString()
+  });
+
+  await chrome.storage.local.set({
+    [HISTORY_STORAGE_KEY]: historyWithoutDuplicate.slice(0, MAX_HISTORY_ENTRIES)
+  });
+}
+
+async function loadHistory() {
+  renderHistory(await getHistory());
+}
+
+function updateHistoryVisibility() {
+  historySection.hidden = !historyEnabledInput.checked;
+}
+
+async function copyPassword(password) {
+  try {
+    await navigator.clipboard.writeText(password);
+  } catch {
+    if (password === passwordInput.value) {
+      passwordInput.select();
+      document.execCommand("copy");
+      return;
+    }
+
+    const fallbackInput = document.createElement("textarea");
+    fallbackInput.value = password;
+    fallbackInput.style.position = "fixed";
+    fallbackInput.style.opacity = "0";
+    document.body.append(fallbackInput);
+    fallbackInput.select();
+    document.execCommand("copy");
+    fallbackInput.remove();
+  }
 }
 
 async function loadSettings() {
@@ -168,9 +283,11 @@ async function loadSettings() {
   numbersInput.checked = settings.numbers;
   specialInput.checked = settings.special;
   problematicInput.checked = settings.problematic;
+  historyEnabledInput.checked = settings.historyEnabled;
 
   blacklistInput.value = settings.blacklist;
 
+  updateHistoryVisibility();
   generatePassword();
 }
 
@@ -190,9 +307,15 @@ lengthInput.addEventListener("input", () => {
   numbersInput,
   specialInput,
   problematicInput,
+  historyEnabledInput,
   blacklistInput
 ].forEach(input => {
   input.addEventListener("input", settingsChanged);
+});
+
+historyEnabledInput.addEventListener("change", () => {
+  updateHistoryVisibility();
+  saveSettings();
 });
 
 copyButton.addEventListener("click", async () => {
@@ -200,18 +323,43 @@ copyButton.addEventListener("click", async () => {
     return;
   }
 
-  try {
-    await navigator.clipboard.writeText(passwordInput.value);
-  } catch {
-    passwordInput.select();
-    document.execCommand("copy");
+  if (lastCopiedPassword === passwordInput.value) {
+    generatePassword(lastCopiedPassword);
   }
 
+  await copyPassword(passwordInput.value);
+  lastCopiedPassword = passwordInput.value;
+  if (historyEnabledInput.checked) {
+    await saveToHistory(passwordInput.value);
+  }
+  if (historyEnabledInput.checked && !historyContainer.hidden) {
+    await loadHistory();
+  }
   status.textContent = "Copied!";
 
   setTimeout(() => {
     status.textContent = "";
   }, 1500);
+});
+
+toggleHistoryButton.addEventListener("click", async () => {
+  if (!historyEnabledInput.checked) {
+    return;
+  }
+
+  historyContainer.hidden = !historyContainer.hidden;
+  toggleHistoryButton.textContent = historyContainer.hidden ? "View" : "Hide";
+
+  if (!historyContainer.hidden) {
+    await loadHistory();
+  }
+});
+
+clearHistoryButton.addEventListener("click", async () => {
+  await chrome.storage.local.remove(HISTORY_STORAGE_KEY);
+  renderHistory([]);
+  historyContainer.hidden = false;
+  toggleHistoryButton.textContent = "Hide";
 });
 
 loadSettings();

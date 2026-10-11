@@ -98,3 +98,82 @@ button {
   font-size: 12px;
   color: #9ca3af;
 }
+.history-section {
+  margin-top: 18px;
+  border-top: 1px solid #374151;
+  padding-top: 14px;
+}
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.history-header h2 {
+  margin: 0;
+  font-size: 14px;
+}
+.history-actions {
+  display: flex;
+  gap: 6px;
+}
+.history-actions button {
+  padding: 6px 9px;
+  background: #374151;
+  color: #fff;
+  font-size: 11px;
+}
+.history-actions button:hover {
+  background: #4b5563;
+}
+.history {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  background: #111827;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.history[hidden] {
+  display: none;
+}
+.history-empty {
+  color: #9ca3af;
+  font-size: 12px;
+}
+.history-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  background: #1f2937;
+}
+.history-entry-content {
+  min-width: 0;
+  flex: 1;
+}
+.history-password {
+  overflow-wrap: anywhere;
+  color: #fff;
+  font-family: monospace;
+  font-size: 12px;
+}
+.history-timestamp {
+  margin-top: 3px;
+  color: #9ca3af;
+  font-size: 11px;
+}
+.history-copy {
+  flex-shrink: 0;
+  padding: 6px 8px;
+  background: #374151;
+  color: #fff;
+  font-size: 11px;
+}
+.history-copy:hover {
+  background: #4b5563;
+}

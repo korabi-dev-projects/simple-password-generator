@@ -50,6 +50,11 @@
           <input type="checkbox" id="problematic" />
           Avoid problematic characters
         </label>
+
+        <label class="full-width">
+          <input type="checkbox" id="historyEnabled" checked />
+          Save password history
+        </label>
       </section>
 
       <label class="field-label" for="blacklist"> Character blacklist </label>
@@ -64,6 +69,17 @@
       />
 
       <div id="status" class="status"></div>
+
+      <section id="historySection" class="history-section">
+        <div class="history-header">
+          <h2>Password history</h2>
+          <div class="history-actions">
+            <button id="toggleHistory" type="button">View</button>
+            <button id="clearHistory" type="button">Clear</button>
+          </div>
+        </div>
+        <div id="history" class="history" hidden></div>
+      </section>
     </main>
 
     <script src="popup.js"></script>

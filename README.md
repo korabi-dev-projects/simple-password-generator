@@ -9,6 +9,9 @@ A lightweight browser extension for generating secure, customizable passwords di
 - Avoid characters that may be problematic in some systems or forms
 - Define a custom character blacklist
 - Copy generated passwords to the clipboard
+- View a timestamped history of copied passwords
+- Clear password history at any time
+- Enable or disable password history saving
 - Persist preferences between popup sessions
 - Use the Web Crypto API for random character selection
 - No third-party dependencies and no network connections
@@ -33,9 +36,11 @@ A lightweight browser extension for generating secure, customizable passwords di
 3. Select the character categories to include.
 4. Optionally enable **Avoid problematic characters**.
 5. Add any additional characters to the blacklist.
-6. Copy the generated password with **Copy**.
+6. Choose whether **Save password history** is enabled.
+7. Copy the generated password with **Copy**. Pressing **Copy** again generates and copies a new password.
+8. Select **View** under Password history to review copied passwords and their timestamps in the scrollable history container. Select **Clear** to remove the history.
 
-Settings are saved automatically using the browser's local extension storage.
+Settings and password history are saved locally using the browser's local extension storage. When **Save password history** is disabled, new copies are not saved and the history controls are hidden. The history keeps up to 50 unique passwords; copying an existing password moves it to the top and refreshes its timestamp.
 
 ## Project Structure
 
